@@ -26,15 +26,26 @@ export function useAnnouncements() {
   const { user, role } = useAuth();
 
   return useQuery({
-    queryKey: ["announcements", role],
+    queryKey: ["announcements", role, user?.id],
     queryFn: async () => {
-      let query = supabase
+      if (!user) return [];
+
+      // Get user's class ID if they are a student
+      let userClassId: string | null = null;
+      if (role === "aluno") {
+        const { data: student } = await supabase
+          .from("students")
+          .select("class_id")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        userClassId = student?.class_id || null;
+      }
+
+      const { data: announcements, error } = await supabase
         .from("announcements")
         .select("*")
         .order("is_pinned", { ascending: false })
         .order("created_at", { ascending: false });
-
-      const { data: announcements, error } = await query;
 
       if (error) throw error;
 
@@ -44,14 +55,20 @@ export function useAnnouncements() {
         ? await supabase.from("profiles").select("id, full_name, avatar_url").in("id", authorIds)
         : { data: [] };
 
-      // Filter by role if not admin
+      // Filter by role and class if not admin
       const filteredAnnouncements = role === "admin"
         ? announcements
         : announcements.filter((a) => {
-            // If no target roles, it's for everyone
-            if (!a.target_roles || a.target_roles.length === 0) return true;
-            // Check if user's role is in target roles
-            return role && a.target_roles.includes(role);
+            // Check role filter
+            const roleMatch = !a.target_roles || a.target_roles.length === 0 || (role && a.target_roles.includes(role));
+            
+            // Check class filter (only applies to students)
+            let classMatch = true;
+            if (role === "aluno" && a.target_classes && a.target_classes.length > 0) {
+              classMatch = userClassId ? a.target_classes.includes(userClassId) : false;
+            }
+            
+            return roleMatch && classMatch;
           });
 
       // Filter expired announcements
