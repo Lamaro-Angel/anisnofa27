@@ -706,6 +706,76 @@ export type Database = {
         }
         Relationships: []
       }
+      tuition_payments: {
+        Row: {
+          academic_year_id: string | null
+          amount: number
+          created_at: string | null
+          description: string | null
+          due_date: string
+          guardian_id: string
+          id: string
+          paid_date: string | null
+          payment_method: string | null
+          payment_status: string
+          reference_number: string | null
+          student_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          academic_year_id?: string | null
+          amount: number
+          created_at?: string | null
+          description?: string | null
+          due_date: string
+          guardian_id: string
+          id?: string
+          paid_date?: string | null
+          payment_method?: string | null
+          payment_status?: string
+          reference_number?: string | null
+          student_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          academic_year_id?: string | null
+          amount?: number
+          created_at?: string | null
+          description?: string | null
+          due_date?: string
+          guardian_id?: string
+          id?: string
+          paid_date?: string | null
+          payment_method?: string | null
+          payment_status?: string
+          reference_number?: string | null
+          student_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tuition_payments_academic_year_id_fkey"
+            columns: ["academic_year_id"]
+            isOneToOne: false
+            referencedRelation: "academic_years"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tuition_payments_guardian_id_fkey"
+            columns: ["guardian_id"]
+            isOneToOne: false
+            referencedRelation: "guardians"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tuition_payments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string | null
