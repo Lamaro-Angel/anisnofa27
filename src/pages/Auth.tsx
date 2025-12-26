@@ -168,6 +168,9 @@ export default function Auth() {
                 <Button type="submit" className="w-full" disabled={loginLoading}>
                   {loginLoading ? "A entrar..." : "Entrar"}
                 </Button>
+                <Link to="/reset-password" className="text-sm text-primary hover:underline text-center">
+                  Esqueceu a palavra-passe?
+                </Link>
                 <div className="relative w-full">
                   <div className="absolute inset-0 flex items-center">
                     <span className="w-full border-t border-border" />

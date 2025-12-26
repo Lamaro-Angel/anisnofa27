@@ -50,8 +50,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     { label: "Turmas", icon: BookOpen, href: "/classes", roles: ["admin", "professor"] },
     { label: "Notas", icon: ClipboardList, href: "/grades", roles: ["admin", "professor", "aluno", "encarregado"] },
     { label: "Frequência", icon: Calendar, href: "/attendance", roles: ["admin", "professor", "aluno", "encarregado"] },
+    { label: "Ranking", icon: Users, href: "/ranking", roles: ["admin", "professor", "aluno"] },
+    { label: "Trabalhos", icon: BookOpen, href: "/assignments", roles: ["admin", "professor", "aluno"] },
     { label: "Mensagens", icon: MessageSquare, href: "/messages", roles: ["admin", "professor", "aluno", "encarregado"] },
     { label: "Avisos", icon: Bell, href: "/announcements", roles: ["admin", "professor", "aluno", "encarregado"] },
+    { label: "Meu Perfil", icon: Settings, href: "/profile", roles: ["admin", "professor", "aluno", "encarregado"] },
     { label: "Definições", icon: Settings, href: "/settings", roles: ["admin"] },
   ];
 
