@@ -3,7 +3,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { useGrades, useCreateGrade, useStudentGrades, GradePeriod } from "@/hooks/useGrades";
 import { useClasses } from "@/hooks/useClasses";
 import { useSubjects } from "@/hooks/useSubjects";
-import { useStudentsByClass, useStudents } from "@/hooks/useStudents";
+import { useStudentsByClass } from "@/hooks/useStudents";
+import { useStudentsLimitedByClass } from "@/hooks/useStudentsLimited";
+import { useTeacherUniqueClasses, useTeacherClasses } from "@/hooks/useTeacherClasses";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -12,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Plus, ClipboardList } from "lucide-react";
+import { Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 
@@ -31,9 +33,27 @@ export default function Grades() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newGrade, setNewGrade] = useState({ student_id: "", grade: "", description: "" });
 
-  const { data: classes } = useClasses();
+  // For admin, use all classes. For professor, use only their classes
+  const { data: allClasses } = useClasses();
+  const { data: teacherClasses } = useTeacherUniqueClasses();
+  const { data: teacherClassSubjects } = useTeacherClasses();
   const { data: subjects } = useSubjects();
-  const { data: classStudents } = useStudentsByClass(selectedClass || null);
+  
+  // Use appropriate class list based on role
+  const classes = role === "professor" ? teacherClasses : allClasses;
+  
+  // For professor, filter subjects to only those they teach in the selected class
+  const availableSubjects = role === "professor" && selectedClass
+    ? subjects?.filter((s) => teacherClassSubjects?.some((tc) => tc.subject_id === s.id && tc.id === selectedClass) ||
+        teacherClassSubjects?.some((tc) => tc.subject_id === s.id))
+    : subjects;
+
+  // For admin, use full student data. For professor, use limited view
+  const { data: classStudentsFull } = useStudentsByClass(role === "admin" ? selectedClass || null : null);
+  const { data: classStudentsLimited } = useStudentsLimitedByClass(role === "professor" ? selectedClass || null : null);
+  const classStudents = role === "professor" 
+    ? classStudentsLimited?.map(s => ({ id: s.student_id, profile: { full_name: s.full_name } }))
+    : classStudentsFull;
   
   // Get current student ID if user is a student
   const { data: currentStudent } = useQuery({
