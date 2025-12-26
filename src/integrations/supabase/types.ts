@@ -110,6 +110,104 @@ export type Database = {
         }
         Relationships: []
       }
+      assignment_submissions: {
+        Row: {
+          assignment_id: string
+          feedback: string | null
+          file_name: string
+          file_type: string | null
+          file_url: string
+          grade: number | null
+          graded_at: string | null
+          graded_by: string | null
+          id: string
+          student_id: string
+          submitted_at: string | null
+        }
+        Insert: {
+          assignment_id: string
+          feedback?: string | null
+          file_name: string
+          file_type?: string | null
+          file_url: string
+          grade?: number | null
+          graded_at?: string | null
+          graded_by?: string | null
+          id?: string
+          student_id: string
+          submitted_at?: string | null
+        }
+        Update: {
+          assignment_id?: string
+          feedback?: string | null
+          file_name?: string
+          file_type?: string | null
+          file_url?: string
+          grade?: number | null
+          graded_at?: string | null
+          graded_by?: string | null
+          id?: string
+          student_id?: string
+          submitted_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assignment_submissions_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assignment_submissions_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      assignments: {
+        Row: {
+          class_subject_id: string
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          due_date: string | null
+          id: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          class_subject_id: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          class_subject_id?: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assignments_class_subject_id_fkey"
+            columns: ["class_subject_id"]
+            isOneToOne: false
+            referencedRelation: "class_subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       attendance: {
         Row: {
           class_subject_id: string
@@ -468,6 +566,54 @@ export type Database = {
         }
         Relationships: []
       }
+      student_rankings: {
+        Row: {
+          academic_year_id: string | null
+          average_grade: number | null
+          calculated_at: string | null
+          id: string
+          points: number | null
+          rank_position: number | null
+          student_id: string
+          total_attendance_rate: number | null
+        }
+        Insert: {
+          academic_year_id?: string | null
+          average_grade?: number | null
+          calculated_at?: string | null
+          id?: string
+          points?: number | null
+          rank_position?: number | null
+          student_id: string
+          total_attendance_rate?: number | null
+        }
+        Update: {
+          academic_year_id?: string | null
+          average_grade?: number | null
+          calculated_at?: string | null
+          id?: string
+          points?: number | null
+          rank_position?: number | null
+          student_id?: string
+          total_attendance_rate?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_rankings_academic_year_id_fkey"
+            columns: ["academic_year_id"]
+            isOneToOne: false
+            referencedRelation: "academic_years"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_rankings_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       students: {
         Row: {
           class_id: string | null
@@ -596,6 +742,15 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      log_activity: {
+        Args: {
+          p_action: string
+          p_details?: Json
+          p_entity_id?: string
+          p_entity_type?: string
+        }
+        Returns: undefined
       }
     }
     Enums: {
