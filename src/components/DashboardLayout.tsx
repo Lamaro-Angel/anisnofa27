@@ -1,10 +1,13 @@
 import { ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { FloatingContactButton } from "@/components/FloatingContactButton";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,6 +15,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   GraduationCap,
   LayoutDashboard,
@@ -25,9 +33,12 @@ import {
   X,
   ClipboardList,
   Bell,
+  Check,
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { formatDistanceToNow } from "date-fns";
+import { pt } from "date-fns/locale";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -35,6 +46,7 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { user, role, signOut } = useAuth();
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useRealtimeNotifications();
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -136,6 +148,90 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             <div className="flex-1" />
 
             <div className="flex items-center gap-2">
+              {/* Notifications */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="ghost" size="icon" className="relative">
+                    <Bell className="h-5 w-5" />
+                    {unreadCount > 0 && (
+                      <Badge 
+                        variant="destructive" 
+                        className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs"
+                      >
+                        {unreadCount > 9 ? "9+" : unreadCount}
+                      </Badge>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent align="end" className="w-80 p-0">
+                  <div className="flex items-center justify-between p-3 border-b border-border">
+                    <h4 className="font-semibold">Notificações</h4>
+                    {unreadCount > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={markAllAsRead}
+                        className="text-xs h-7"
+                      >
+                        <Check className="h-3 w-3 mr-1" />
+                        Marcar todas como lidas
+                      </Button>
+                    )}
+                  </div>
+                  <ScrollArea className="h-80">
+                    {notifications.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center h-40 text-muted-foreground">
+                        <Bell className="h-8 w-8 mb-2 opacity-50" />
+                        <p className="text-sm">Sem notificações</p>
+                      </div>
+                    ) : (
+                      <div className="divide-y divide-border">
+                        {notifications.map((notification) => (
+                          <button
+                            key={notification.id}
+                            onClick={() => {
+                              markAsRead(notification.id);
+                              if (notification.type === "message") {
+                                navigate("/messages");
+                              } else {
+                                navigate("/announcements");
+                              }
+                            }}
+                            className={cn(
+                              "w-full p-3 text-left hover:bg-muted/50 transition-colors",
+                              !notification.read && "bg-accent/30"
+                            )}
+                          >
+                            <div className="flex items-start gap-3">
+                              <div className={cn(
+                                "p-2 rounded-full",
+                                notification.type === "message" ? "bg-primary/10 text-primary" : "bg-warning/10 text-warning"
+                              )}>
+                                {notification.type === "message" ? (
+                                  <MessageSquare className="h-4 w-4" />
+                                ) : (
+                                  <Bell className="h-4 w-4" />
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium truncate">{notification.title}</p>
+                                <p className="text-xs text-muted-foreground truncate">{notification.content}</p>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true, locale: pt })}
+                                </p>
+                              </div>
+                              {!notification.read && (
+                                <div className="h-2 w-2 rounded-full bg-primary" />
+                              )}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </ScrollArea>
+                </PopoverContent>
+              </Popover>
+
               <ThemeToggle />
               
               <DropdownMenu>
