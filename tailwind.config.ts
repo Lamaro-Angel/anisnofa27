@@ -39,9 +39,20 @@ export default {
           DEFAULT: "hsl(var(--warning))",
           foreground: "hsl(var(--warning-foreground))",
         },
+        info: {
+          DEFAULT: "hsl(var(--info))",
+          foreground: "hsl(var(--info-foreground))",
+        },
         muted: {
           DEFAULT: "hsl(var(--muted))",
           foreground: "hsl(var(--muted-foreground))",
+        },
+        performance: {
+          excellent: "hsl(var(--performance-excellent))",
+          good: "hsl(var(--performance-good))",
+          average: "hsl(var(--performance-average))",
+          poor: "hsl(var(--performance-poor))",
+          critical: "hsl(var(--performance-critical))",
         },
         accent: {
           DEFAULT: "hsl(var(--accent))",
