@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { DashboardLayout } from "@/components/DashboardLayout";
+import { RoleProtectedRoute } from "@/components/RoleProtectedRoute";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import UpdatePassword from "./pages/UpdatePassword";
@@ -20,6 +21,7 @@ import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";
 import Ranking from "./pages/Ranking";
 import Assignments from "./pages/Assignments";
+import Tuition from "./pages/Tuition";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -67,17 +69,79 @@ function AppRoutes() {
       <Route path="/auth" element={<PublicRoute><Auth /></PublicRoute>} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/update-password" element={<UpdatePassword />} />
+      
+      {/* Dashboard - All authenticated users */}
       <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-      <Route path="/users" element={<ProtectedRoute><Users /></ProtectedRoute>} />
-      <Route path="/classes" element={<ProtectedRoute><Classes /></ProtectedRoute>} />
+      
+      {/* Users - Admin only */}
+      <Route path="/users" element={
+        <ProtectedRoute>
+          <RoleProtectedRoute allowedRoles={["admin"]}>
+            <Users />
+          </RoleProtectedRoute>
+        </ProtectedRoute>
+      } />
+      
+      {/* Classes - Admin and Professor */}
+      <Route path="/classes" element={
+        <ProtectedRoute>
+          <RoleProtectedRoute allowedRoles={["admin", "professor"]}>
+            <Classes />
+          </RoleProtectedRoute>
+        </ProtectedRoute>
+      } />
+      
+      {/* Grades - All roles */}
       <Route path="/grades" element={<ProtectedRoute><Grades /></ProtectedRoute>} />
+      
+      {/* Attendance - All roles */}
       <Route path="/attendance" element={<ProtectedRoute><Attendance /></ProtectedRoute>} />
+      
+      {/* Messages - All roles */}
       <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
+      
+      {/* Announcements - All roles */}
       <Route path="/announcements" element={<ProtectedRoute><Announcements /></ProtectedRoute>} />
+      
+      {/* Profile - All roles */}
       <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-      <Route path="/ranking" element={<ProtectedRoute><Ranking /></ProtectedRoute>} />
-      <Route path="/assignments" element={<ProtectedRoute><Assignments /></ProtectedRoute>} />
-      <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+      
+      {/* Ranking - Admin, Professor and Student */}
+      <Route path="/ranking" element={
+        <ProtectedRoute>
+          <RoleProtectedRoute allowedRoles={["admin", "professor", "aluno"]}>
+            <Ranking />
+          </RoleProtectedRoute>
+        </ProtectedRoute>
+      } />
+      
+      {/* Assignments - Admin, Professor and Student */}
+      <Route path="/assignments" element={
+        <ProtectedRoute>
+          <RoleProtectedRoute allowedRoles={["admin", "professor", "aluno"]}>
+            <Assignments />
+          </RoleProtectedRoute>
+        </ProtectedRoute>
+      } />
+      
+      {/* Tuition - Admin and Guardian only */}
+      <Route path="/tuition" element={
+        <ProtectedRoute>
+          <RoleProtectedRoute allowedRoles={["admin", "encarregado"]}>
+            <Tuition />
+          </RoleProtectedRoute>
+        </ProtectedRoute>
+      } />
+      
+      {/* Settings - Admin only */}
+      <Route path="/settings" element={
+        <ProtectedRoute>
+          <RoleProtectedRoute allowedRoles={["admin"]}>
+            <Settings />
+          </RoleProtectedRoute>
+        </ProtectedRoute>
+      } />
+      
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
