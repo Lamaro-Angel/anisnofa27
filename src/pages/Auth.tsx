@@ -1,16 +1,17 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { GraduationCap, Mail, Lock, User, Chrome, Eye, EyeOff, ArrowRight, Sparkles } from "lucide-react";
+import { GraduationCap, Mail, Lock, User, Eye, EyeOff, ArrowRight, Sparkles } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import authIllustration from "@/assets/auth-illustration.jpg";
+import authImage from "@/assets/auth-students.jpg";
+import googleLogo from "@/assets/google-logo.png";
 
-type AppRole = "admin" | "professor" | "aluno" | "encarregado";
+type AppRole = "professor" | "aluno" | "encarregado";
 type AuthMode = "login" | "signup" | "reset";
 
 export default function Auth() {
@@ -106,57 +107,57 @@ export default function Auth() {
     <div className="min-h-screen flex">
       {/* Left Side - Image */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/90 via-primary/70 to-primary/50 z-10" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/80 via-accent/60 to-warning/50 z-10" />
         <img 
-          src={authIllustration} 
+          src={authImage} 
           alt="Estudantes" 
           className="absolute inset-0 w-full h-full object-cover"
         />
-        <div className="relative z-20 flex flex-col justify-between p-12 text-primary-foreground h-full">
+        <div className="relative z-20 flex flex-col justify-between p-12 h-full">
           {/* Logo */}
           <div className="flex items-center gap-3">
-            <div className="p-3 rounded-xl bg-primary-foreground/20 backdrop-blur-sm">
-              <GraduationCap className="h-8 w-8" />
+            <div className="p-3 rounded-xl bg-card/20 backdrop-blur-sm">
+              <GraduationCap className="h-8 w-8 text-card" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold">Anisnofa</h1>
-              <p className="text-sm opacity-80">Sistema de Gestão Escolar</p>
+              <h1 className="text-2xl font-bold text-card">Anisnofa</h1>
+              <p className="text-sm text-card/80">Sistema de Gestão Escolar</p>
             </div>
           </div>
 
           {/* Content */}
           <div className="space-y-6">
             <div className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5" />
-              <span className="text-sm font-medium">Plataforma Educacional Moderna</span>
+              <Sparkles className="h-5 w-5 text-card" />
+              <span className="text-sm font-medium text-card">Plataforma Educacional Moderna</span>
             </div>
-            <h2 className="text-4xl font-bold leading-tight">
+            <h2 className="text-4xl font-bold leading-tight text-card">
               Transforme a gestão<br />
               da sua escola
             </h2>
-            <p className="text-lg opacity-90 max-w-md">
+            <p className="text-lg text-card/90 max-w-md">
               Gestão de notas, presenças, comunicação e muito mais numa única plataforma intuitiva.
             </p>
             <div className="flex gap-4 pt-4">
               <div className="flex flex-col">
-                <span className="text-3xl font-bold">500+</span>
-                <span className="text-sm opacity-80">Escolas</span>
+                <span className="text-3xl font-bold text-card">500+</span>
+                <span className="text-sm text-card/80">Escolas</span>
               </div>
-              <div className="w-px bg-primary-foreground/30" />
+              <div className="w-px bg-card/30" />
               <div className="flex flex-col">
-                <span className="text-3xl font-bold">50k+</span>
-                <span className="text-sm opacity-80">Estudantes</span>
+                <span className="text-3xl font-bold text-card">50k+</span>
+                <span className="text-sm text-card/80">Estudantes</span>
               </div>
-              <div className="w-px bg-primary-foreground/30" />
+              <div className="w-px bg-card/30" />
               <div className="flex flex-col">
-                <span className="text-3xl font-bold">98%</span>
-                <span className="text-sm opacity-80">Satisfação</span>
+                <span className="text-3xl font-bold text-card">98%</span>
+                <span className="text-sm text-card/80">Satisfação</span>
               </div>
             </div>
           </div>
 
           {/* Footer */}
-          <p className="text-sm opacity-70">
+          <p className="text-sm text-card/70">
             © 2024 Anisnofa. Todos os direitos reservados.
           </p>
         </div>
@@ -203,10 +204,10 @@ export default function Auth() {
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full h-12 text-base font-medium gap-3 hover:bg-accent hover:border-primary transition-all duration-300"
+                  className="w-full h-12 text-base font-medium gap-3 hover:bg-accent/10 hover:border-primary transition-all duration-300"
                   onClick={handleGoogleLogin}
                 >
-                  <Chrome className="h-5 w-5" />
+                  <img src={googleLogo} alt="Google" className="h-5 w-5" />
                   Continuar com Google
                 </Button>
 
@@ -275,7 +276,7 @@ export default function Auth() {
 
                 <Button 
                   type="submit" 
-                  className="w-full h-12 text-base font-medium gap-2 group"
+                  className="w-full h-12 text-base font-medium gap-2 group gradient-primary text-primary-foreground hover:opacity-90"
                   disabled={loading}
                 >
                   {loading ? "A entrar..." : "Entrar"}
@@ -360,7 +361,7 @@ export default function Auth() {
 
                 <Button 
                   type="submit" 
-                  className="w-full h-12 text-base font-medium gap-2 group"
+                  className="w-full h-12 text-base font-medium gap-2 group gradient-primary text-primary-foreground hover:opacity-90"
                   disabled={loading}
                 >
                   {loading ? "A criar conta..." : "Criar conta"}
@@ -390,7 +391,7 @@ export default function Auth() {
 
                 <Button 
                   type="submit" 
-                  className="w-full h-12 text-base font-medium gap-2 group"
+                  className="w-full h-12 text-base font-medium gap-2 group gradient-primary text-primary-foreground hover:opacity-90"
                 >
                   Continuar
                   <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
