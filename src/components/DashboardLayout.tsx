@@ -63,6 +63,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const navItems = [
     { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard", roles: ["admin", "professor", "aluno", "encarregado"] },
     { label: "Utilizadores", icon: Users, href: "/users", roles: ["admin"] },
+    { label: "Matrículas", icon: GraduationCap, href: "/enrollment", roles: ["admin"] },
     { label: "Turmas", icon: BookOpen, href: "/classes", roles: ["admin", "professor"] },
     { label: "Notas", icon: ClipboardList, href: "/grades", roles: ["admin", "professor", "aluno", "encarregado"] },
     { label: "Frequência", icon: Calendar, href: "/attendance", roles: ["admin", "professor", "aluno", "encarregado"] },
