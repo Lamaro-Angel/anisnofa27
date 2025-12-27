@@ -11,9 +11,12 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Search, Trash2, UserPlus } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Search, Trash2, UserPlus, GraduationCap, Users as UsersIcon } from "lucide-react";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
+import StudentManagement from "@/components/students/StudentManagement";
+import GuardianManagement from "@/components/guardians/GuardianManagement";
 
 const roleLabels: Record<AppRole, string> = {
   admin: "Administrador",
@@ -66,7 +69,7 @@ export default function Users() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Gestão de Utilizadores</h1>
-          <p className="text-muted-foreground">Gerir todos os utilizadores do sistema</p>
+          <p className="text-muted-foreground">Gerir utilizadores, alunos e encarregados</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
@@ -137,7 +140,24 @@ export default function Users() {
         </Dialog>
       </div>
 
-      <Card>
+      <Tabs defaultValue="users" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="users" className="gap-2">
+            <UserPlus className="h-4 w-4" />
+            Utilizadores
+          </TabsTrigger>
+          <TabsTrigger value="students" className="gap-2">
+            <GraduationCap className="h-4 w-4" />
+            Alunos
+          </TabsTrigger>
+          <TabsTrigger value="guardians" className="gap-2">
+            <UsersIcon className="h-4 w-4" />
+            Encarregados
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="users">
+          <Card>
         <CardHeader>
           <CardTitle>Utilizadores</CardTitle>
           <CardDescription>Lista de todos os utilizadores registados</CardDescription>
@@ -272,7 +292,17 @@ export default function Users() {
             </div>
           )}
         </CardContent>
-      </Card>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="students">
+          <StudentManagement />
+        </TabsContent>
+
+        <TabsContent value="guardians">
+          <GuardianManagement />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
