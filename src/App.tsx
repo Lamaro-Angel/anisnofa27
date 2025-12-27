@@ -24,6 +24,7 @@ import Assignments from "./pages/Assignments";
 import Tuition from "./pages/Tuition";
 import Reports from "./pages/Reports";
 import ContactRequests from "./pages/ContactRequests";
+import Enrollment from "./pages/Enrollment";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -152,6 +153,15 @@ function AppRoutes() {
         <ProtectedRoute>
           <RoleProtectedRoute allowedRoles={["admin"]}>
             <ContactRequests />
+          </RoleProtectedRoute>
+        </ProtectedRoute>
+      } />
+      
+      {/* Enrollment - Admin only */}
+      <Route path="/enrollment" element={
+        <ProtectedRoute>
+          <RoleProtectedRoute allowedRoles={["admin"]}>
+            <Enrollment />
           </RoleProtectedRoute>
         </ProtectedRoute>
       } />

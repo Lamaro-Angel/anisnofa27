@@ -50,9 +50,12 @@ export default function Tuition() {
   const handlePayment = async () => {
     if (!selectedPayment) return;
 
+    // Encarregados apenas registam o pagamento para validação posterior pelo admin
+    const newStatus = role === "admin" ? "paid" : "pending_validation";
+    
     await updatePayment.mutateAsync({
       id: selectedPayment,
-      payment_status: "paid",
+      payment_status: newStatus,
       paid_date: new Date().toISOString().split("T")[0],
       payment_method: paymentMethod,
       reference_number: referenceNumber,
@@ -69,6 +72,8 @@ export default function Tuition() {
         return <Badge className="bg-success text-success-foreground">Pago</Badge>;
       case "pending":
         return <Badge className="bg-warning text-warning-foreground">Pendente</Badge>;
+      case "pending_validation":
+        return <Badge className="bg-blue-500 text-white">A Validar</Badge>;
       case "overdue":
         return <Badge className="bg-destructive text-destructive-foreground">Em atraso</Badge>;
       case "cancelled":
@@ -269,7 +274,7 @@ export default function Tuition() {
                     </TableCell>
                     <TableCell>{getStatusBadge(payment.payment_status)}</TableCell>
                     <TableCell className="text-right">
-                      {payment.payment_status === "pending" && (
+                      {(payment.payment_status === "pending" || (role === "admin" && payment.payment_status === "pending_validation")) && (
                         <Dialog>
                           <DialogTrigger asChild>
                             <Button
@@ -277,7 +282,7 @@ export default function Tuition() {
                               className="gradient-primary text-primary-foreground"
                               onClick={() => setSelectedPayment(payment.id)}
                             >
-                              Pagar
+                              {role === "admin" && payment.payment_status === "pending_validation" ? "Validar" : "Pagar"}
                             </Button>
                           </DialogTrigger>
                           <DialogContent>
@@ -309,7 +314,11 @@ export default function Tuition() {
                                 className="w-full gradient-success text-success-foreground"
                                 disabled={updatePayment.isPending}
                               >
-                                {updatePayment.isPending ? "A processar..." : "Confirmar Pagamento"}
+                                {updatePayment.isPending 
+                                  ? "A processar..." 
+                                  : role === "admin" 
+                                    ? "Confirmar Pagamento" 
+                                    : "Submeter para Validação"}
                               </Button>
                             </div>
                           </DialogContent>

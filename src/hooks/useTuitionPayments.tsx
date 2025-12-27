@@ -9,7 +9,7 @@ export interface TuitionPayment {
   amount: number;
   due_date: string;
   paid_date: string | null;
-  payment_status: "pending" | "paid" | "overdue" | "cancelled";
+  payment_status: "pending" | "paid" | "overdue" | "cancelled" | "pending_validation";
   payment_method: string | null;
   reference_number: string | null;
   description: string | null;
@@ -87,7 +87,7 @@ export function useUpdateTuitionPayment() {
       ...updates
     }: {
       id: string;
-      payment_status?: "pending" | "paid" | "overdue" | "cancelled";
+      payment_status?: "pending" | "paid" | "overdue" | "cancelled" | "pending_validation";
       paid_date?: string;
       payment_method?: string;
       reference_number?: string;

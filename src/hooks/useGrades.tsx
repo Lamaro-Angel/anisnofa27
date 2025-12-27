@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useEffect } from "react";
 
 export type GradePeriod = "1_trimestre" | "2_trimestre" | "3_trimestre" | "final";
 
@@ -79,6 +80,33 @@ export function useGrades(filters?: { classId?: string; subjectId?: string; peri
 }
 
 export function useStudentGrades(studentId: string | null) {
+  const queryClient = useQueryClient();
+
+  // Subscribe to realtime updates for grades
+  useEffect(() => {
+    if (!studentId) return;
+
+    const channel = supabase
+      .channel("grades-realtime-student")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "grades",
+          filter: `student_id=eq.${studentId}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["grades", "student", studentId] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [studentId, queryClient]);
+
   return useQuery({
     queryKey: ["grades", "student", studentId],
     queryFn: async () => {
