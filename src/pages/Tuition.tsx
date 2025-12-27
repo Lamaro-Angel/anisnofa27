@@ -31,11 +31,15 @@ import {
   CheckCircle, 
   Clock, 
   AlertTriangle,
-  User
+  User,
+  Filter,
+  Calendar,
+  Search
 } from "lucide-react";
-import { format } from "date-fns";
+import { format, startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear, isWithinInterval, parseISO } from "date-fns";
 import { pt } from "date-fns/locale";
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function Tuition() {
   const { role } = useAuth();
@@ -46,6 +50,67 @@ export default function Tuition() {
   const [selectedPayment, setSelectedPayment] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState("");
   const [referenceNumber, setReferenceNumber] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [periodFilter, setPeriodFilter] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Filter payments based on selected filters
+  const filteredPayments = useMemo(() => {
+    if (!payments) return [];
+
+    return payments.filter((payment) => {
+      // Status filter
+      if (statusFilter !== "all" && payment.payment_status !== statusFilter) {
+        return false;
+      }
+
+      // Search filter (by student name or description)
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const studentName = payment.student?.profiles?.full_name?.toLowerCase() || "";
+        const description = payment.description?.toLowerCase() || "";
+        if (!studentName.includes(query) && !description.includes(query)) {
+          return false;
+        }
+      }
+
+      // Period filter
+      if (periodFilter !== "all") {
+        const paymentDate = parseISO(payment.due_date);
+        const now = new Date();
+        
+        let startDate: Date;
+        let endDate: Date;
+
+        switch (periodFilter) {
+          case "this_month":
+            startDate = startOfMonth(now);
+            endDate = endOfMonth(now);
+            break;
+          case "last_month":
+            startDate = startOfMonth(subMonths(now, 1));
+            endDate = endOfMonth(subMonths(now, 1));
+            break;
+          case "last_3_months":
+            startDate = startOfMonth(subMonths(now, 2));
+            endDate = endOfMonth(now);
+            break;
+          case "this_year":
+            startDate = startOfYear(now);
+            endDate = endOfYear(now);
+            break;
+          default:
+            return true;
+        }
+
+        if (!isWithinInterval(paymentDate, { start: startDate, end: endDate })) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [payments, statusFilter, periodFilter, searchQuery]);
 
   const handlePayment = async () => {
     if (!selectedPayment) return;
@@ -241,24 +306,74 @@ export default function Tuition() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {/* Filters */}
+          <div className="flex flex-col lg:flex-row gap-4 mb-6">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Pesquisar por aluno ou descrição..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-full lg:w-[180px]">
+                <Filter className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="Estado" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os estados</SelectItem>
+                <SelectItem value="pending">Pendente</SelectItem>
+                <SelectItem value="paid">Pago</SelectItem>
+                <SelectItem value="pending_validation">A Validar</SelectItem>
+                <SelectItem value="overdue">Em atraso</SelectItem>
+                <SelectItem value="cancelled">Cancelado</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={periodFilter} onValueChange={setPeriodFilter}>
+              <SelectTrigger className="w-full lg:w-[180px]">
+                <Calendar className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="Período" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os períodos</SelectItem>
+                <SelectItem value="this_month">Este mês</SelectItem>
+                <SelectItem value="last_month">Mês passado</SelectItem>
+                <SelectItem value="last_3_months">Últimos 3 meses</SelectItem>
+                <SelectItem value="this_year">Este ano</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           {paymentsLoading ? (
             <div className="space-y-4">
               {[1, 2, 3].map(i => <Skeleton key={i} className="h-12 w-full" />)}
             </div>
-          ) : payments && payments.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Descrição</TableHead>
-                  <TableHead>Aluno</TableHead>
-                  <TableHead>Valor</TableHead>
-                  <TableHead>Vencimento</TableHead>
-                  <TableHead>Estado</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {payments.map((payment) => (
+          ) : filteredPayments && filteredPayments.length > 0 ? (
+            <>
+              {/* Summary of filtered results */}
+              <div className="flex items-center justify-between mb-4 text-sm text-muted-foreground">
+                <span>
+                  {filteredPayments.length} pagamento{filteredPayments.length !== 1 ? "s" : ""} encontrado{filteredPayments.length !== 1 ? "s" : ""}
+                </span>
+                <span>
+                  Total: {filteredPayments.reduce((acc, p) => acc + Number(p.amount), 0).toLocaleString("pt-AO")} Kz
+                </span>
+              </div>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Descrição</TableHead>
+                    <TableHead>Aluno</TableHead>
+                    <TableHead>Valor</TableHead>
+                    <TableHead>Vencimento</TableHead>
+                    <TableHead>Estado</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                {filteredPayments.map((payment) => (
                   <TableRow key={payment.id}>
                     <TableCell className="font-medium">
                       {payment.description || "Propina Mensal"}
@@ -334,10 +449,24 @@ export default function Tuition() {
                 ))}
               </TableBody>
             </Table>
+            </>
           ) : (
             <div className="text-center py-8 text-muted-foreground">
               <CreditCard className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>Nenhum registo de propinas encontrado</p>
+              {(statusFilter !== "all" || periodFilter !== "all" || searchQuery) && (
+                <Button
+                  variant="link"
+                  onClick={() => {
+                    setStatusFilter("all");
+                    setPeriodFilter("all");
+                    setSearchQuery("");
+                  }}
+                  className="mt-2"
+                >
+                  Limpar filtros
+                </Button>
+              )}
             </div>
           )}
         </CardContent>
