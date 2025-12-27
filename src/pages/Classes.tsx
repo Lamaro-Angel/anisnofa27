@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useClasses, useCreateClass, useUpdateClass, useDeleteClass, useAcademicYears, useCreateAcademicYear } from "@/hooks/useClasses";
 import { useSubjects, useCreateSubject, useDeleteSubject } from "@/hooks/useSubjects";
+import { useClassSubjects, useTeachers, useCreateClassSubject, useUpdateClassSubject, useDeleteClassSubject } from "@/hooks/useClassSubjects";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -9,24 +10,32 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Trash2, Edit, Users, BookOpen, Calendar } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Plus, Trash2, Users, BookOpen, Calendar, GraduationCap } from "lucide-react";
 
 export default function Classes() {
   const { data: classes, isLoading: classesLoading } = useClasses();
   const { data: subjects, isLoading: subjectsLoading } = useSubjects();
   const { data: academicYears } = useAcademicYears();
+  const { data: classSubjects, isLoading: classSubjectsLoading } = useClassSubjects();
+  const { data: teachers } = useTeachers();
   const createClass = useCreateClass();
   const deleteClass = useDeleteClass();
   const createSubject = useCreateSubject();
   const deleteSubject = useDeleteSubject();
   const createAcademicYear = useCreateAcademicYear();
+  const createClassSubject = useCreateClassSubject();
+  const updateClassSubject = useUpdateClassSubject();
+  const deleteClassSubject = useDeleteClassSubject();
 
   const [newClass, setNewClass] = useState({ name: "", grade_level: "", room: "", capacity: 30 });
   const [newSubject, setNewSubject] = useState({ name: "", code: "", description: "", credits: 1 });
   const [newYear, setNewYear] = useState({ name: "", start_date: "", end_date: "", is_current: false });
+  const [newAssignment, setNewAssignment] = useState({ class_id: "", subject_id: "", teacher_id: "" });
   const [classDialogOpen, setClassDialogOpen] = useState(false);
   const [subjectDialogOpen, setSubjectDialogOpen] = useState(false);
   const [yearDialogOpen, setYearDialogOpen] = useState(false);
+  const [assignmentDialogOpen, setAssignmentDialogOpen] = useState(false);
 
   const handleCreateClass = () => {
     createClass.mutate(newClass, {
@@ -55,6 +64,23 @@ export default function Classes() {
     });
   };
 
+  const handleCreateAssignment = () => {
+    createClassSubject.mutate({
+      class_id: newAssignment.class_id,
+      subject_id: newAssignment.subject_id,
+      teacher_id: newAssignment.teacher_id || undefined,
+    }, {
+      onSuccess: () => {
+        setNewAssignment({ class_id: "", subject_id: "", teacher_id: "" });
+        setAssignmentDialogOpen(false);
+      },
+    });
+  };
+
+  const handleTeacherChange = (classSubjectId: string, teacherId: string) => {
+    updateClassSubject.mutate({ id: classSubjectId, teacher_id: teacherId || null });
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -67,6 +93,10 @@ export default function Classes() {
           <TabsTrigger value="classes" className="gap-2">
             <Users className="h-4 w-4" />
             Turmas
+          </TabsTrigger>
+          <TabsTrigger value="assignments" className="gap-2">
+            <GraduationCap className="h-4 w-4" />
+            Professores/Turmas
           </TabsTrigger>
           <TabsTrigger value="subjects" className="gap-2">
             <BookOpen className="h-4 w-4" />
@@ -202,6 +232,157 @@ export default function Classes() {
                         <TableRow>
                           <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                             Nenhuma turma encontrada
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="assignments">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle>Atribuição de Professores</CardTitle>
+                <CardDescription>Associar professores às turmas e disciplinas</CardDescription>
+              </div>
+              <Dialog open={assignmentDialogOpen} onOpenChange={setAssignmentDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="gap-2">
+                    <Plus className="h-4 w-4" />
+                    Nova Atribuição
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Nova Atribuição</DialogTitle>
+                    <DialogDescription>Associar um professor a uma turma e disciplina</DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>Turma</Label>
+                      <Select value={newAssignment.class_id} onValueChange={(v) => setNewAssignment({ ...newAssignment, class_id: v })}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione uma turma" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {classes?.map((cls) => (
+                            <SelectItem key={cls.id} value={cls.id}>{cls.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Disciplina</Label>
+                      <Select value={newAssignment.subject_id} onValueChange={(v) => setNewAssignment({ ...newAssignment, subject_id: v })}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione uma disciplina" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {subjects?.map((sub) => (
+                            <SelectItem key={sub.id} value={sub.id}>{sub.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Professor (opcional)</Label>
+                      <Select value={newAssignment.teacher_id} onValueChange={(v) => setNewAssignment({ ...newAssignment, teacher_id: v })}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione um professor" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {teachers?.map((t) => (
+                            <SelectItem key={t.id} value={t.id}>{t.profile?.full_name || "Sem nome"}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setAssignmentDialogOpen(false)}>
+                      Cancelar
+                    </Button>
+                    <Button onClick={handleCreateAssignment} disabled={!newAssignment.class_id || !newAssignment.subject_id}>
+                      Criar Atribuição
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </CardHeader>
+            <CardContent>
+              {classSubjectsLoading ? (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+                </div>
+              ) : (
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Turma</TableHead>
+                        <TableHead>Disciplina</TableHead>
+                        <TableHead>Professor</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {classSubjects?.map((cs) => (
+                        <TableRow key={cs.id}>
+                          <TableCell className="font-medium">{cs.class_name || "-"}</TableCell>
+                          <TableCell>{cs.subject_name || "-"}</TableCell>
+                          <TableCell>
+                            <Select 
+                              value={cs.teacher_id || ""} 
+                              onValueChange={(v) => handleTeacherChange(cs.id, v)}
+                            >
+                              <SelectTrigger className="w-[200px]">
+                                <SelectValue placeholder="Selecionar professor" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="">Nenhum</SelectItem>
+                                {teachers?.map((t) => (
+                                  <SelectItem key={t.id} value={t.id}>{t.profile?.full_name || "Sem nome"}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Eliminar atribuição?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Esta ação não pode ser revertida.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => deleteClassSubject.mutate(cs.id)}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  >
+                                    Eliminar
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                      {classSubjects?.length === 0 && (
+                        <TableRow>
+                          <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                            Nenhuma atribuição encontrada
                           </TableCell>
                         </TableRow>
                       )}
