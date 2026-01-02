@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
 import { useAnnouncements } from "@/hooks/useAnnouncements";
@@ -9,9 +11,19 @@ import { formatDistanceToNow } from "date-fns";
 import { pt } from "date-fns/locale";
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const { user, role } = useAuth();
   const { data: stats, isLoading: statsLoading } = useDashboardStats();
   const { data: announcements, isLoading: announcementsLoading } = useAnnouncements();
+
+  // Redirect to role-specific dashboards
+  useEffect(() => {
+    if (role === "professor") {
+      navigate("/teacher-dashboard", { replace: true });
+    } else if (role === "aluno") {
+      navigate("/student-dashboard", { replace: true });
+    }
+  }, [role, navigate]);
 
   const roleLabels = {
     admin: "Administrador",

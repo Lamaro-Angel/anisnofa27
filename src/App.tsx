@@ -11,6 +11,8 @@ import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import UpdatePassword from "./pages/UpdatePassword";
 import Dashboard from "./pages/Dashboard";
+import TeacherDashboard from "./pages/TeacherDashboard";
+import StudentDashboard from "./pages/StudentDashboard";
 import Users from "./pages/Users";
 import Classes from "./pages/Classes";
 import Grades from "./pages/Grades";
@@ -25,6 +27,8 @@ import Tuition from "./pages/Tuition";
 import Reports from "./pages/Reports";
 import ContactRequests from "./pages/ContactRequests";
 import Enrollment from "./pages/Enrollment";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfUse from "./pages/TermsOfUse";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -72,9 +76,29 @@ function AppRoutes() {
       <Route path="/auth" element={<PublicRoute><Auth /></PublicRoute>} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/update-password" element={<UpdatePassword />} />
+      <Route path="/politica-privacidade" element={<PrivacyPolicy />} />
+      <Route path="/termos" element={<TermsOfUse />} />
       
       {/* Dashboard - All authenticated users */}
       <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+      
+      {/* Teacher Dashboard */}
+      <Route path="/teacher-dashboard" element={
+        <ProtectedRoute>
+          <RoleProtectedRoute allowedRoles={["professor"]}>
+            <TeacherDashboard />
+          </RoleProtectedRoute>
+        </ProtectedRoute>
+      } />
+      
+      {/* Student Dashboard */}
+      <Route path="/student-dashboard" element={
+        <ProtectedRoute>
+          <RoleProtectedRoute allowedRoles={["aluno"]}>
+            <StudentDashboard />
+          </RoleProtectedRoute>
+        </ProtectedRoute>
+      } />
       
       {/* Users - Admin only */}
       <Route path="/users" element={
