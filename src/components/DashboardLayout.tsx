@@ -60,8 +60,15 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     navigate("/auth");
   };
 
+  // Determine dashboard path based on role
+  const dashboardPath = role === "professor" 
+    ? "/teacher-dashboard" 
+    : role === "aluno" 
+      ? "/student-dashboard" 
+      : "/dashboard";
+
   const navItems = [
-    { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard", roles: ["admin", "professor", "aluno", "encarregado"] },
+    { label: "Dashboard", icon: LayoutDashboard, href: dashboardPath, roles: ["admin", "professor", "aluno", "encarregado"] },
     { label: "Utilizadores", icon: Users, href: "/users", roles: ["admin"] },
     { label: "Matrículas", icon: GraduationCap, href: "/enrollment", roles: ["admin"] },
     { label: "Turmas", icon: BookOpen, href: "/classes", roles: ["admin", "professor"] },
@@ -111,7 +118,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           </Button>
         </div>
 
-        <nav className="p-4 space-y-1">
+        <nav className="p-4 space-y-1 flex-1">
           {filteredNavItems.map((item) => (
             <Link
               key={item.href}
@@ -129,6 +136,19 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </Link>
           ))}
         </nav>
+        
+        {/* Footer links */}
+        <div className="p-4 border-t border-sidebar-border">
+          <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+            <Link to="/politica-privacidade" className="hover:text-foreground hover:underline">
+              Privacidade
+            </Link>
+            <span>•</span>
+            <Link to="/termos" className="hover:text-foreground hover:underline">
+              Termos
+            </Link>
+          </div>
+        </div>
       </aside>
 
       {/* Overlay */}

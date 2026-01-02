@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { GraduationCap, Mail, Lock, User, Eye, EyeOff, ArrowRight, Sparkles } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -26,6 +27,7 @@ export default function Auth() {
   const [role, setRole] = useState<AppRole>("aluno");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,6 +56,16 @@ export default function Auth() {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!acceptedTerms) {
+      toast({
+        variant: "destructive",
+        title: "Termos não aceites",
+        description: "Deve aceitar os termos de uso e política de privacidade para continuar.",
+      });
+      return;
+    }
+    
     setLoading(true);
 
     if (password.length < 6) {
@@ -359,10 +371,29 @@ export default function Auth() {
                   </Select>
                 </div>
 
+                <div className="flex items-start space-x-3">
+                  <Checkbox
+                    id="terms"
+                    checked={acceptedTerms}
+                    onCheckedChange={(checked) => setAcceptedTerms(checked as boolean)}
+                    className="mt-1"
+                  />
+                  <Label htmlFor="terms" className="text-sm text-muted-foreground leading-relaxed cursor-pointer">
+                    Li e aceito os{" "}
+                    <Link to="/termos" target="_blank" className="text-primary hover:underline font-medium">
+                      Termos de Uso
+                    </Link>{" "}
+                    e a{" "}
+                    <Link to="/politica-privacidade" target="_blank" className="text-primary hover:underline font-medium">
+                      Política de Privacidade
+                    </Link>
+                  </Label>
+                </div>
+
                 <Button 
                   type="submit" 
                   className="w-full h-12 text-base font-medium gap-2 group gradient-primary text-primary-foreground hover:opacity-90"
-                  disabled={loading}
+                  disabled={loading || !acceptedTerms}
                 >
                   {loading ? "A criar conta..." : "Criar conta"}
                   <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
