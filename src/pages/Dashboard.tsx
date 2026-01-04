@@ -22,6 +22,8 @@ export default function Dashboard() {
       navigate("/teacher-dashboard", { replace: true });
     } else if (role === "aluno") {
       navigate("/student-dashboard", { replace: true });
+    } else if (role === "encarregado") {
+      navigate("/guardian-dashboard", { replace: true });
     }
   }, [role, navigate]);
 

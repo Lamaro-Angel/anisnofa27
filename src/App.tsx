@@ -12,6 +12,7 @@ import ResetPassword from "./pages/ResetPassword";
 import UpdatePassword from "./pages/UpdatePassword";
 import Dashboard from "./pages/Dashboard";
 import TeacherDashboard from "./pages/TeacherDashboard";
+import GuardianDashboard from "./pages/GuardianDashboard";
 import StudentDashboard from "./pages/StudentDashboard";
 import Users from "./pages/Users";
 import Classes from "./pages/Classes";
@@ -100,7 +101,14 @@ function AppRoutes() {
         </ProtectedRoute>
       } />
       
-      {/* Users - Admin only */}
+      {/* Guardian Dashboard */}
+      <Route path="/guardian-dashboard" element={
+        <ProtectedRoute>
+          <RoleProtectedRoute allowedRoles={["encarregado"]}>
+            <GuardianDashboard />
+          </RoleProtectedRoute>
+        </ProtectedRoute>
+      } />
       <Route path="/users" element={
         <ProtectedRoute>
           <RoleProtectedRoute allowedRoles={["admin"]}>

@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   Users, 
   CreditCard, 
@@ -34,12 +35,14 @@ import {
   User,
   Filter,
   Calendar,
-  Search
+  Search,
+  Smartphone
 } from "lucide-react";
 import { format, startOfMonth, endOfMonth, subMonths, startOfYear, endOfYear, isWithinInterval, parseISO } from "date-fns";
 import { pt } from "date-fns/locale";
 import { useState, useMemo } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { MulticaixaExpressPayment } from "@/components/MulticaixaExpressPayment";
 
 export default function Tuition() {
   const { role } = useAuth();
@@ -400,42 +403,108 @@ export default function Tuition() {
                               {role === "admin" && payment.payment_status === "pending_validation" ? "Validar" : "Pagar"}
                             </Button>
                           </DialogTrigger>
-                          <DialogContent>
+                          <DialogContent className="max-w-lg">
                             <DialogHeader>
-                              <DialogTitle>Confirmar Pagamento</DialogTitle>
+                              <DialogTitle>
+                                {role === "admin" && payment.payment_status === "pending_validation" 
+                                  ? "Validar Pagamento" 
+                                  : "Efetuar Pagamento"}
+                              </DialogTitle>
                               <DialogDescription>
                                 Valor: {Number(payment.amount).toLocaleString("pt-AO")} Kz
                               </DialogDescription>
                             </DialogHeader>
-                            <div className="space-y-4 py-4">
-                              <div className="space-y-2">
-                                <Label>Método de Pagamento</Label>
-                                <Input
-                                  placeholder="Ex: Transferência Bancária, Multicaixa"
-                                  value={paymentMethod}
-                                  onChange={(e) => setPaymentMethod(e.target.value)}
-                                />
+                            
+                            {role === "encarregado" && payment.payment_status === "pending" ? (
+                              <Tabs defaultValue="multicaixa" className="w-full">
+                                <TabsList className="grid w-full grid-cols-2">
+                                  <TabsTrigger value="multicaixa" className="gap-2">
+                                    <Smartphone className="h-4 w-4" />
+                                    Multicaixa Express
+                                  </TabsTrigger>
+                                  <TabsTrigger value="other" className="gap-2">
+                                    <CreditCard className="h-4 w-4" />
+                                    Outro Método
+                                  </TabsTrigger>
+                                </TabsList>
+                                <TabsContent value="multicaixa" className="mt-4">
+                                  <MulticaixaExpressPayment
+                                    amount={Number(payment.amount)}
+                                    description={payment.description || "Propina Mensal"}
+                                    onSubmit={async (data) => {
+                                      await updatePayment.mutateAsync({
+                                        id: payment.id,
+                                        payment_status: "pending_validation",
+                                        paid_date: new Date().toISOString().split("T")[0],
+                                        payment_method: "Multicaixa Express",
+                                        reference_number: data.referenceNumber,
+                                      });
+                                      setSelectedPayment(null);
+                                    }}
+                                    isLoading={updatePayment.isPending}
+                                  />
+                                </TabsContent>
+                                <TabsContent value="other" className="mt-4">
+                                  <div className="space-y-4">
+                                    <div className="space-y-2">
+                                      <Label>Método de Pagamento</Label>
+                                      <Input
+                                        placeholder="Ex: Transferência Bancária, Depósito"
+                                        value={paymentMethod}
+                                        onChange={(e) => setPaymentMethod(e.target.value)}
+                                      />
+                                    </div>
+                                    <div className="space-y-2">
+                                      <Label>Número de Referência</Label>
+                                      <Input
+                                        placeholder="Ex: REF123456"
+                                        value={referenceNumber}
+                                        onChange={(e) => setReferenceNumber(e.target.value)}
+                                      />
+                                    </div>
+                                    <Button
+                                      onClick={handlePayment}
+                                      className="w-full gradient-success text-success-foreground"
+                                      disabled={updatePayment.isPending || !paymentMethod || !referenceNumber}
+                                    >
+                                      {updatePayment.isPending 
+                                        ? "A processar..." 
+                                        : "Submeter para Validação"}
+                                    </Button>
+                                  </div>
+                                </TabsContent>
+                              </Tabs>
+                            ) : (
+                              <div className="space-y-4 py-4">
+                                <div className="space-y-2">
+                                  <Label>Método de Pagamento</Label>
+                                  <Input
+                                    placeholder="Ex: Transferência Bancária, Multicaixa"
+                                    value={paymentMethod}
+                                    onChange={(e) => setPaymentMethod(e.target.value)}
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label>Número de Referência</Label>
+                                  <Input
+                                    placeholder="Ex: REF123456"
+                                    value={referenceNumber}
+                                    onChange={(e) => setReferenceNumber(e.target.value)}
+                                  />
+                                </div>
+                                <Button
+                                  onClick={handlePayment}
+                                  className="w-full gradient-success text-success-foreground"
+                                  disabled={updatePayment.isPending}
+                                >
+                                  {updatePayment.isPending 
+                                    ? "A processar..." 
+                                    : role === "admin" 
+                                      ? "Confirmar Pagamento" 
+                                      : "Submeter para Validação"}
+                                </Button>
                               </div>
-                              <div className="space-y-2">
-                                <Label>Número de Referência</Label>
-                                <Input
-                                  placeholder="Ex: REF123456"
-                                  value={referenceNumber}
-                                  onChange={(e) => setReferenceNumber(e.target.value)}
-                                />
-                              </div>
-                              <Button
-                                onClick={handlePayment}
-                                className="w-full gradient-success text-success-foreground"
-                                disabled={updatePayment.isPending}
-                              >
-                                {updatePayment.isPending 
-                                  ? "A processar..." 
-                                  : role === "admin" 
-                                    ? "Confirmar Pagamento" 
-                                    : "Submeter para Validação"}
-                              </Button>
-                            </div>
+                            )}
                           </DialogContent>
                         </Dialog>
                       )}

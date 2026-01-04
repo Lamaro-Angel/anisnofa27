@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { FloatingContactButton } from "@/components/FloatingContactButton";
+import { GlobalUserSearch } from "@/components/GlobalUserSearch";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -65,7 +66,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     ? "/teacher-dashboard" 
     : role === "aluno" 
       ? "/student-dashboard" 
-      : "/dashboard";
+      : role === "encarregado"
+        ? "/guardian-dashboard"
+        : "/dashboard";
 
   const navItems = [
     { label: "Dashboard", icon: LayoutDashboard, href: dashboardPath, roles: ["admin", "professor", "aluno", "encarregado"] },
@@ -173,7 +176,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <Menu className="h-5 w-5" />
             </Button>
 
-            <div className="flex-1" />
+            <div className="flex-1 flex justify-center">
+              <GlobalUserSearch />
+            </div>
 
             <div className="flex items-center gap-2">
               {/* Notifications */}
