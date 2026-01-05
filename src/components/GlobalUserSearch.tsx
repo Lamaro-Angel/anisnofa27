@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useMemo, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -49,6 +49,7 @@ const roleBadgeVariants: Record<string, "default" | "secondary" | "outline" | "d
 
 export function GlobalUserSearch() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -79,6 +80,31 @@ export function GlobalUserSearch() {
     },
     enabled: !!user && open,
   });
+
+  // Real-time subscription for profiles changes
+  useEffect(() => {
+    if (!user || !open) return;
+
+    const channel = supabase
+      .channel("profiles-realtime-search")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "profiles",
+        },
+        () => {
+          // Invalidate and refetch when profiles change
+          queryClient.invalidateQueries({ queryKey: ["searchable-users"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, open, queryClient]);
 
   const filteredUsers = useMemo(() => {
     if (!users || !searchQuery.trim()) return users || [];
