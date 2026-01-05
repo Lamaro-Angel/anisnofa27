@@ -3,10 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
 import { useAnnouncements } from "@/hooks/useAnnouncements";
+import { useOnlinePresence } from "@/hooks/useOnlinePresence";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Users, BookOpen, GraduationCap, Bell, TrendingUp, Calendar, MessageSquare, CheckCircle, Clock, UserCheck } from "lucide-react";
+import { Users, BookOpen, GraduationCap, Bell, TrendingUp, Calendar, MessageSquare, CheckCircle, Clock, UserCheck, Wifi, UserCog } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { pt } from "date-fns/locale";
 
@@ -15,6 +16,7 @@ export default function Dashboard() {
   const { user, role } = useAuth();
   const { data: stats, isLoading: statsLoading } = useDashboardStats();
   const { data: announcements, isLoading: announcementsLoading } = useAnnouncements();
+  const { onlineCount } = useOnlinePresence();
 
   // Redirect to role-specific dashboards
   useEffect(() => {
@@ -47,7 +49,74 @@ export default function Dashboard() {
         </p>
       </div>
 
-      {/* Stats Cards */}
+      {/* Admin Stats Cards */}
+      {role === "admin" && (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card className="card-hover">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Total Utilizadores</CardTitle>
+              <UserCog className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              {statsLoading ? (
+                <Skeleton className="h-8 w-20" />
+              ) : (
+                <>
+                  <div className="text-2xl font-bold">{stats?.totalUsers || 0}</div>
+                  <p className="text-xs text-muted-foreground">registados na plataforma</p>
+                </>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="card-hover border-green-500/20 bg-green-500/5">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Utilizadores Online</CardTitle>
+              <Wifi className="h-4 w-4 text-green-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600 dark:text-green-400">{onlineCount}</div>
+              <p className="text-xs text-muted-foreground">ativos agora</p>
+            </CardContent>
+          </Card>
+
+          <Card className="card-hover">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Total Alunos</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              {statsLoading ? (
+                <Skeleton className="h-8 w-20" />
+              ) : (
+                <>
+                  <div className="text-2xl font-bold">{stats?.totalStudents || 0}</div>
+                  <p className="text-xs text-muted-foreground">matriculados</p>
+                </>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="card-hover">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Encarregados</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              {statsLoading ? (
+                <Skeleton className="h-8 w-20" />
+              ) : (
+                <>
+                  <div className="text-2xl font-bold">{stats?.totalGuardians || 0}</div>
+                  <p className="text-xs text-muted-foreground">registados</p>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Regular Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card className="card-hover">
           <CardHeader className="flex flex-row items-center justify-between pb-2">

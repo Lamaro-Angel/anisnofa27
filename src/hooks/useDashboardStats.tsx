@@ -7,6 +7,8 @@ export interface DashboardStats {
   totalClasses: number;
   totalTeachers: number;
   totalAnnouncements: number;
+  totalUsers: number;
+  totalGuardians: number;
   averageGrade: number | null;
   attendanceRate: number | null;
   unreadMessages: number;
@@ -30,6 +32,8 @@ export function useDashboardStats() {
         classesResult,
         teachersResult,
         announcementsResult,
+        usersResult,
+        guardiansResult,
         gradesResult,
         attendanceResult,
         messagesResult,
@@ -39,6 +43,8 @@ export function useDashboardStats() {
         supabase.from("classes").select("id", { count: "exact", head: true }),
         supabase.from("teachers").select("id", { count: "exact", head: true }),
         supabase.from("announcements").select("id", { count: "exact", head: true }),
+        supabase.from("profiles").select("id", { count: "exact", head: true }),
+        supabase.from("guardians").select("id", { count: "exact", head: true }),
         supabase.from("grades").select("grade").not("grade", "is", null),
         supabase.from("attendance").select("status"),
         user ? supabase
@@ -90,6 +96,8 @@ export function useDashboardStats() {
         totalClasses: classesResult.count || 0,
         totalTeachers: teachersResult.count || 0,
         totalAnnouncements: announcementsResult.count || 0,
+        totalUsers: usersResult.count || 0,
+        totalGuardians: guardiansResult.count || 0,
         averageGrade: averageGrade ? Math.round(averageGrade * 10) / 10 : null,
         attendanceRate: attendanceRate ? Math.round(attendanceRate * 10) / 10 : null,
         unreadMessages: messagesResult.count || 0,
