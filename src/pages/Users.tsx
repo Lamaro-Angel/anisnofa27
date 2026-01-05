@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useUsers, useUpdateUserRole, useDeleteUser, AppRole } from "@/hooks/useUsers";
 import { useCreateUser } from "@/hooks/useCreateUser";
+import { useOnlinePresence } from "@/hooks/useOnlinePresence";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -12,11 +13,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Trash2, UserPlus, GraduationCap, Users as UsersIcon } from "lucide-react";
+import { Search, Trash2, UserPlus, GraduationCap, Users as UsersIcon, Wifi } from "lucide-react";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
 import StudentManagement from "@/components/students/StudentManagement";
 import GuardianManagement from "@/components/guardians/GuardianManagement";
+import { OnlineIndicator } from "@/components/OnlineIndicator";
 
 const roleLabels: Record<AppRole, string> = {
   admin: "Administrador",
@@ -42,6 +44,7 @@ export default function Users() {
   const updateRole = useUpdateUserRole();
   const deleteUser = useDeleteUser();
   const createUser = useCreateUser();
+  const { isUserOnline, onlineCount } = useOnlinePresence();
 
   const filteredUsers = users?.filter((user) => {
     const matchesSearch =
@@ -140,6 +143,43 @@ export default function Users() {
         </Dialog>
       </div>
 
+      {/* Stats Cards */}
+      <div className="grid gap-4 md:grid-cols-3 mb-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Total Utilizadores</CardTitle>
+            <UsersIcon className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{users?.length || 0}</div>
+            <p className="text-xs text-muted-foreground">registados</p>
+          </CardContent>
+        </Card>
+        <Card className="border-green-500/20 bg-green-500/5">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Utilizadores Online</CardTitle>
+            <Wifi className="h-4 w-4 text-green-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600 dark:text-green-400">{onlineCount}</div>
+            <p className="text-xs text-muted-foreground">ativos agora</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Por Papel</CardTitle>
+            <GraduationCap className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-2">
+              <Badge variant="default">{users?.filter(u => u.role === "admin").length || 0} Admin</Badge>
+              <Badge variant="secondary">{users?.filter(u => u.role === "professor").length || 0} Prof</Badge>
+              <Badge variant="outline">{users?.filter(u => u.role === "aluno").length || 0} Alunos</Badge>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       <Tabs defaultValue="users" className="space-y-4">
         <TabsList>
           <TabsTrigger value="users" className="gap-2">
@@ -197,6 +237,7 @@ export default function Users() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Utilizador</TableHead>
+                    <TableHead>Estado</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Papel</TableHead>
                     <TableHead>Data de Registo</TableHead>
@@ -208,18 +249,23 @@ export default function Users() {
                     <TableRow key={user.id}>
                       <TableCell>
                         <div className="flex items-center gap-3">
-                          <Avatar className="h-8 w-8">
-                            <AvatarFallback className="bg-primary/10 text-primary text-xs">
-                              {user.full_name
-                                .split(" ")
-                                .map((n) => n[0])
-                                .join("")
-                                .toUpperCase()
-                                .slice(0, 2)}
-                            </AvatarFallback>
-                          </Avatar>
+                          <div className="relative">
+                            <Avatar className="h-8 w-8">
+                              <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                                {user.full_name
+                                  .split(" ")
+                                  .map((n) => n[0])
+                                  .join("")
+                                  .toUpperCase()
+                                  .slice(0, 2)}
+                              </AvatarFallback>
+                            </Avatar>
+                          </div>
                           <span className="font-medium">{user.full_name}</span>
                         </div>
+                      </TableCell>
+                      <TableCell>
+                        <OnlineIndicator isOnline={isUserOnline(user.id)} showLabel />
                       </TableCell>
                       <TableCell className="text-muted-foreground">{user.email}</TableCell>
                       <TableCell>
@@ -282,7 +328,7 @@ export default function Users() {
                   ))}
                   {filteredUsers?.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                         Nenhum utilizador encontrado
                       </TableCell>
                     </TableRow>
