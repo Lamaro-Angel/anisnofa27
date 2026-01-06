@@ -68,11 +68,29 @@ export default function Auth() {
     
     setLoading(true);
 
-    if (password.length < 6) {
+    // Strong password validation
+    const passwordErrors: string[] = [];
+    if (password.length < 8) {
+      passwordErrors.push('pelo menos 8 caracteres');
+    }
+    if (!/[A-Z]/.test(password)) {
+      passwordErrors.push('uma letra maiúscula');
+    }
+    if (!/[a-z]/.test(password)) {
+      passwordErrors.push('uma letra minúscula');
+    }
+    if (!/[0-9]/.test(password)) {
+      passwordErrors.push('um número');
+    }
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+      passwordErrors.push('um caractere especial (!@#$%...)');
+    }
+
+    if (passwordErrors.length > 0) {
       toast({
         variant: "destructive",
-        title: "Erro",
-        description: "A palavra-passe deve ter pelo menos 6 caracteres.",
+        title: "Palavra-passe fraca",
+        description: `A palavra-passe deve conter: ${passwordErrors.join(', ')}.`,
       });
       setLoading(false);
       return;
@@ -354,7 +372,9 @@ export default function Auth() {
                       {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                     </button>
                   </div>
-                  <p className="text-xs text-muted-foreground">Mínimo 6 caracteres</p>
+                  <p className="text-xs text-muted-foreground">
+                    Mínimo 8 caracteres, incluindo maiúscula, minúscula, número e caractere especial
+                  </p>
                 </div>
 
                 <div className="space-y-2">

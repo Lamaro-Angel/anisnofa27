@@ -101,12 +101,13 @@ export default function Profile() {
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
-    // Validate file type
-    if (!file.type.startsWith("image/")) {
+    // Client-side validation (server also validates)
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
       toast({
         variant: "destructive",
         title: "Erro",
-        description: "Por favor, selecione uma imagem.",
+        description: "Apenas imagens JPEG, PNG ou WebP são permitidas.",
       });
       return;
     }
@@ -124,40 +125,44 @@ export default function Profile() {
     setUploading(true);
 
     try {
-      const fileExt = file.name.split(".").pop();
-      const filePath = `${user.id}/avatar.${fileExt}`;
+      // Get current session token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error("Não autenticado");
+      }
 
-      // Upload to storage
-      const { error: uploadError } = await supabase.storage
-        .from("avatars")
-        .upload(filePath, file, { upsert: true });
+      // Upload via Edge Function
+      const formData = new FormData();
+      formData.append('file', file);
 
-      if (uploadError) throw uploadError;
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/upload-avatar`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: formData,
+        }
+      );
 
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from("avatars")
-        .getPublicUrl(filePath);
+      const result = await response.json();
 
-      // Update profile
-      const { error: updateError } = await supabase
-        .from("profiles")
-        .update({ avatar_url: publicUrl })
-        .eq("id", user.id);
-
-      if (updateError) throw updateError;
+      if (!response.ok) {
+        throw new Error(result.error || 'Erro ao carregar a imagem');
+      }
 
       queryClient.invalidateQueries({ queryKey: ["profile"] });
       toast({
         title: "Foto atualizada!",
         description: "A sua foto de perfil foi alterada.",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
       toast({
         variant: "destructive",
         title: "Erro",
-        description: "Não foi possível carregar a imagem.",
+        description: error.message || "Não foi possível carregar a imagem.",
       });
     } finally {
       setUploading(false);
