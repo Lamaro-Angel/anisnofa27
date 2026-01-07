@@ -11,9 +11,73 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { FileText, Upload, Calendar, Clock, Download, Plus, CheckCircle, AlertCircle } from "lucide-react";
+import { FileText, Upload, Calendar, Clock, Download, Plus, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 import { formatDistanceToNow, format, isPast } from "date-fns";
 import { pt } from "date-fns/locale";
+
+// Component for secure file download via Edge Function
+function SubmissionInfo({ submission }: { submission: NonNullable<Assignment['submission']> }) {
+  const [downloading, setDownloading] = useState(false);
+  const { toast } = useToast();
+
+  const handleDownload = async () => {
+    setDownloading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({ variant: "destructive", title: "Não autenticado" });
+        return;
+      }
+
+      const response = await supabase.functions.invoke('get-submission-file', {
+        body: { submissionId: submission.id }
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message || 'Erro ao obter ficheiro');
+      }
+
+      const { signedUrl } = response.data;
+      if (signedUrl) {
+        window.open(signedUrl, '_blank');
+      }
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: error.message || "Não foi possível descarregar o ficheiro."
+      });
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  return (
+    <div className="p-3 rounded-lg bg-muted mb-4">
+      <div className="flex items-center gap-2 mb-2">
+        <CheckCircle className="h-4 w-4 text-green-500" />
+        <span className="text-sm font-medium">Submetido</span>
+      </div>
+      <button 
+        onClick={handleDownload}
+        disabled={downloading}
+        className="text-sm text-primary hover:underline flex items-center gap-1 disabled:opacity-50"
+      >
+        {downloading ? (
+          <Loader2 className="h-3 w-3 animate-spin" />
+        ) : (
+          <Download className="h-3 w-3" />
+        )}
+        {submission.file_name}
+      </button>
+      {submission.feedback && (
+        <p className="text-sm mt-2 text-muted-foreground">
+          <strong>Feedback:</strong> {submission.feedback}
+        </p>
+      )}
+    </div>
+  );
+}
 
 interface Assignment {
   id: string;
@@ -269,26 +333,7 @@ export default function Assignments() {
 
                 {/* Submission info */}
                 {assignment.submission && (
-                  <div className="p-3 rounded-lg bg-muted mb-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      <span className="text-sm font-medium">Submetido</span>
-                    </div>
-                    <a 
-                      href={assignment.submission.file_url} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-sm text-primary hover:underline flex items-center gap-1"
-                    >
-                      <Download className="h-3 w-3" />
-                      {assignment.submission.file_name}
-                    </a>
-                    {assignment.submission.feedback && (
-                      <p className="text-sm mt-2 text-muted-foreground">
-                        <strong>Feedback:</strong> {assignment.submission.feedback}
-                      </p>
-                    )}
-                  </div>
+                  <SubmissionInfo submission={assignment.submission} />
                 )}
 
                 {/* Action buttons */}
