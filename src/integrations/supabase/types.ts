@@ -44,32 +44,38 @@ export type Database = {
       activity_logs: {
         Row: {
           action: string
+          anonymized_at: string | null
           created_at: string | null
           details: Json | null
           entity_id: string | null
           entity_type: string | null
           id: string
           ip_address: string | null
+          ip_anonymized: boolean | null
           user_id: string | null
         }
         Insert: {
           action: string
+          anonymized_at?: string | null
           created_at?: string | null
           details?: Json | null
           entity_id?: string | null
           entity_type?: string | null
           id?: string
           ip_address?: string | null
+          ip_anonymized?: boolean | null
           user_id?: string | null
         }
         Update: {
           action?: string
+          anonymized_at?: string | null
           created_at?: string | null
           details?: Json | null
           entity_id?: string | null
           entity_type?: string | null
           id?: string
           ip_address?: string | null
+          ip_anonymized?: boolean | null
           user_id?: string | null
         }
         Relationships: []
@@ -799,9 +805,28 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      profiles_public: {
+        Row: {
+          avatar_url: string | null
+          full_name: string | null
+          id: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          full_name?: string | null
+          id?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          full_name?: string | null
+          id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      anonymize_ip: { Args: { ip_addr: string }; Returns: string }
+      cleanup_activity_logs: { Args: never; Returns: undefined }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
@@ -813,6 +838,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_super_admin: { Args: { _user_id: string }; Returns: boolean }
       log_activity: {
         Args: {
           p_action: string
