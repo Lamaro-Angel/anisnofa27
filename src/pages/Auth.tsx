@@ -7,12 +7,13 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { GraduationCap, Mail, Lock, User, Eye, EyeOff, ArrowRight, Sparkles } from "lucide-react";
+import { GraduationCap, Mail, Lock, User, Eye, EyeOff, ArrowRight, Sparkles, Phone, Calendar } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import authImage from "@/assets/auth-students.jpg";
 import googleLogo from "@/assets/google-logo.png";
 
 type AppRole = "professor" | "aluno" | "encarregado";
+type GenderType = "masculino" | "feminino" | "outro";
 type AuthMode = "login" | "signup" | "reset";
 
 export default function Auth() {
@@ -24,6 +25,9 @@ export default function Auth() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [birthDate, setBirthDate] = useState("");
+  const [gender, setGender] = useState<GenderType | "">("");
   const [role, setRole] = useState<AppRole>("aluno");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -96,7 +100,7 @@ export default function Auth() {
       return;
     }
 
-    const { error } = await signUp(email, password, name, role);
+    const { error } = await signUp(email, password, name, role, phone || undefined, birthDate || undefined, gender || undefined);
 
     if (error) {
       toast({
@@ -377,18 +381,65 @@ export default function Auth() {
                   </p>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="role" className="text-sm font-medium">Tipo de conta</Label>
-                  <Select value={role} onValueChange={(v) => setRole(v as AppRole)}>
-                    <SelectTrigger className="h-12 text-base">
-                      <SelectValue placeholder="Selecione o tipo" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="aluno">Aluno</SelectItem>
-                      <SelectItem value="professor">Professor</SelectItem>
-                      <SelectItem value="encarregado">Encarregado de Educação</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="phone" className="text-sm font-medium">Telemóvel</Label>
+                    <div className="relative group">
+                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                      <Input
+                        id="phone"
+                        type="tel"
+                        placeholder="9XX XXX XXX"
+                        className="pl-11 h-12 text-base transition-all duration-300 focus:ring-2 focus:ring-primary/20"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="birthDate" className="text-sm font-medium">Data de Nascimento</Label>
+                    <div className="relative group">
+                      <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                      <Input
+                        id="birthDate"
+                        type="date"
+                        className="pl-11 h-12 text-base transition-all duration-300 focus:ring-2 focus:ring-primary/20"
+                        value={birthDate}
+                        onChange={(e) => setBirthDate(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="gender" className="text-sm font-medium">Sexo</Label>
+                    <Select value={gender} onValueChange={(v) => setGender(v as GenderType)}>
+                      <SelectTrigger className="h-12 text-base">
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="masculino">Masculino</SelectItem>
+                        <SelectItem value="feminino">Feminino</SelectItem>
+                        <SelectItem value="outro">Outro</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="role" className="text-sm font-medium">Tipo de conta</Label>
+                    <Select value={role} onValueChange={(v) => setRole(v as AppRole)}>
+                      <SelectTrigger className="h-12 text-base">
+                        <SelectValue placeholder="Selecione o tipo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="aluno">Aluno</SelectItem>
+                        <SelectItem value="professor">Professor</SelectItem>
+                        <SelectItem value="encarregado">Encarregado de Educação</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
                 <div className="flex items-start space-x-3">
