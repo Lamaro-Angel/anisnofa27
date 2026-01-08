@@ -103,13 +103,30 @@ export default function GuardianDashboard() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">
-          Bem-vindo, Encarregado
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          Acompanhe o progresso dos seus educandos
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">
+            Bem-vindo, Encarregado
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Acompanhe o progresso dos seus educandos
+          </p>
+        </div>
+        
+        {/* Prominent Pay Button */}
+        {pendingPayments.length > 0 && (
+          <Link to="/propinas">
+            <Button size="lg" className="gradient-primary text-primary-foreground gap-2 shadow-lg hover:shadow-xl transition-all">
+              <CreditCard className="h-5 w-5" />
+              Pagar Propinas
+              {pendingPayments.length > 0 && (
+                <Badge variant="secondary" className="ml-2 bg-primary-foreground/20 text-primary-foreground">
+                  {pendingPayments.length}
+                </Badge>
+              )}
+            </Button>
+          </Link>
+        )}
       </div>
 
       {/* Stats Cards */}

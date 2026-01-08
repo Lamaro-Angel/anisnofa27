@@ -3,6 +3,7 @@ import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
 type AppRole = "admin" | "professor" | "aluno" | "encarregado";
+type GenderType = "masculino" | "feminino" | "outro";
 
 interface AuthContextType {
   user: User | null;
@@ -10,7 +11,7 @@ interface AuthContextType {
   role: AppRole | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signUp: (email: string, password: string, fullName: string, role: AppRole) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, fullName: string, role: AppRole, phone?: string, birthDate?: string, gender?: GenderType) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   signInWithGoogle: () => Promise<{ error: Error | null }>;
 }
@@ -87,7 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: error as Error | null };
   };
 
-  const signUp = async (email: string, password: string, fullName: string, userRole: AppRole) => {
+  const signUp = async (email: string, password: string, fullName: string, userRole: AppRole, phone?: string, birthDate?: string, gender?: GenderType) => {
     const redirectUrl = `${window.location.origin}/`;
 
     const { data, error } = await supabase.auth.signUp({
@@ -97,6 +98,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         emailRedirectTo: redirectUrl,
         data: {
           full_name: fullName,
+          phone: phone || null,
+          birth_date: birthDate || null,
+          gender: gender || null,
         },
       },
     });
@@ -107,6 +111,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // If signup successful, create the user role
     if (data.user) {
+      // Update profile with additional data
+      if (phone || birthDate || gender) {
+        const profileUpdate: Record<string, string | null> = {};
+        if (phone) profileUpdate.phone = phone;
+        if (birthDate) profileUpdate.birth_date = birthDate;
+        if (gender) profileUpdate.gender = gender;
+        
+        await supabase
+          .from("profiles")
+          .update(profileUpdate)
+          .eq("id", data.user.id);
+      }
+
       const { error: roleError } = await supabase.from("user_roles").insert({
         user_id: data.user.id,
         role: userRole,
