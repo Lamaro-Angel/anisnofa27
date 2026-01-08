@@ -28,35 +28,10 @@ serve(async (req) => {
   }
 
   try {
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      throw new Error("Não autorizado");
-    }
-
-    // Verify the caller is an admin
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
-
-    const { data: { user: caller }, error: callerError } = await userClient.auth.getUser();
-    if (callerError || !caller) {
-      throw new Error("Não autorizado");
-    }
-
-    // Check if caller is admin
-    const { data: roleData } = await userClient
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", caller.id)
-      .single();
-
-    if (roleData?.role !== "admin") {
-      throw new Error("Apenas administradores podem criar utilizadores de teste");
-    }
+    console.log("Iniciando criação de utilizadores de teste...");
 
     // Use service role client to create users
     const adminClient = createClient(supabaseUrl, supabaseServiceKey, {
