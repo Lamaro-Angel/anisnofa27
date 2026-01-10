@@ -16,12 +16,17 @@ export function useCreateUser() {
   return useMutation({
     mutationFn: async (data: CreateUserData) => {
       // Create user through Supabase Auth
+      // The database trigger handle_new_user_registration will automatically:
+      // 1. Create the profile
+      // 2. Create the user_roles record
+      // 3. Create the role-specific record (students, teachers, guardians)
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
         options: {
           data: {
             full_name: data.full_name,
+            role: data.role,
           },
         },
       });
@@ -29,26 +34,10 @@ export function useCreateUser() {
       if (authError) throw authError;
       if (!authData.user) throw new Error("Falha ao criar utilizador");
 
-      const userId = authData.user.id;
+      // Small delay to ensure trigger completes
+      await new Promise(resolve => setTimeout(resolve, 500));
 
-      // Insert role
-      const { error: roleError } = await supabase.from("user_roles").insert({
-        user_id: userId,
-        role: data.role,
-      });
-
-      if (roleError) throw roleError;
-
-      // Create role-specific record
-      if (data.role === "professor") {
-        await supabase.from("teachers").insert({ user_id: userId });
-      } else if (data.role === "aluno") {
-        await supabase.from("students").insert({ user_id: userId });
-      } else if (data.role === "encarregado") {
-        await supabase.from("guardians").insert({ user_id: userId });
-      }
-
-      return userId;
+      return authData.user.id;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });

@@ -91,6 +91,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signUp = async (email: string, password: string, fullName: string, userRole: AppRole, phone?: string, birthDate?: string, gender?: GenderType) => {
     const redirectUrl = `${window.location.origin}/`;
 
+    // The database trigger handle_new_user_registration will automatically:
+    // 1. Create the profile
+    // 2. Create the user_roles record
+    // 3. Create the role-specific record (students, teachers, guardians)
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -98,6 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         emailRedirectTo: redirectUrl,
         data: {
           full_name: fullName,
+          role: userRole,
           phone: phone || null,
           birth_date: birthDate || null,
           gender: gender || null,
@@ -109,39 +114,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error: error as Error };
     }
 
-    // If signup successful, create the user role
+    // Check if user was created and wait a moment for trigger to complete
     if (data.user) {
-      // Update profile with additional data
-      if (phone || birthDate || gender) {
-        const profileUpdate: Record<string, string | null> = {};
-        if (phone) profileUpdate.phone = phone;
-        if (birthDate) profileUpdate.birth_date = birthDate;
-        if (gender) profileUpdate.gender = gender;
-        
-        await supabase
-          .from("profiles")
-          .update(profileUpdate)
-          .eq("id", data.user.id);
-      }
-
-      const { error: roleError } = await supabase.from("user_roles").insert({
-        user_id: data.user.id,
-        role: userRole,
-      });
-
-      if (roleError) {
-        console.error("Error creating role:", roleError);
-        return { error: roleError as unknown as Error };
-      }
-
-      // Create role-specific record
-      if (userRole === "professor") {
-        await supabase.from("teachers").insert({ user_id: data.user.id });
-      } else if (userRole === "aluno") {
-        await supabase.from("students").insert({ user_id: data.user.id });
-      } else if (userRole === "encarregado") {
-        await supabase.from("guardians").insert({ user_id: data.user.id });
-      }
+      // Small delay to ensure trigger completes
+      await new Promise(resolve => setTimeout(resolve, 500));
     }
 
     return { error: null };
