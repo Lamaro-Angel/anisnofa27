@@ -7,14 +7,14 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { GraduationCap, Mail, Lock, User, Eye, EyeOff, ArrowRight, Sparkles, Phone, Calendar } from "lucide-react";
+import { GraduationCap, Mail, Lock, User, Eye, EyeOff, ArrowRight, Sparkles, Phone, Calendar, CheckCircle, RefreshCw } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import authImage from "@/assets/auth-students.jpg";
 import googleLogo from "@/assets/google-logo.png";
 
 type AppRole = "professor" | "aluno" | "encarregado";
 type GenderType = "masculino" | "feminino" | "outro";
-type AuthMode = "login" | "signup" | "reset";
+type AuthMode = "login" | "signup" | "reset" | "verify-email";
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -112,10 +112,10 @@ export default function Auth() {
       });
     } else {
       toast({
-        title: "Conta criada!",
-        description: "A sua conta foi criada com sucesso.",
+        title: "Verifique o seu email!",
+        description: "Enviámos um link de confirmação para o seu email.",
       });
-      navigate("/dashboard");
+      setMode("verify-email");
     }
 
     setLoading(false);
@@ -224,16 +224,18 @@ export default function Auth() {
                 {mode === "login" && "Bem-vindo de volta"}
                 {mode === "signup" && "Criar nova conta"}
                 {mode === "reset" && "Recuperar palavra-passe"}
+                {mode === "verify-email" && "Verifique o seu email"}
               </h2>
               <p className="text-muted-foreground">
                 {mode === "login" && "Introduza as suas credenciais para continuar"}
                 {mode === "signup" && "Preencha os dados para se registar"}
                 {mode === "reset" && "Introduza o seu email para recuperar"}
+                {mode === "verify-email" && "Enviámos um link de confirmação para o seu email"}
               </p>
             </div>
 
             {/* Google Button */}
-            {mode !== "reset" && (
+            {mode !== "reset" && mode !== "verify-email" && (
               <>
                 <Button
                   type="button"
@@ -509,8 +511,59 @@ export default function Auth() {
               </form>
             )}
 
+            {/* Email Verification Success */}
+            {mode === "verify-email" && (
+              <div className="space-y-6 text-center">
+                <div className="mx-auto w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
+                  <CheckCircle className="h-10 w-10 text-primary" />
+                </div>
+                
+                <div className="space-y-2">
+                  <p className="text-lg font-medium text-foreground">
+                    Enviámos um email para:
+                  </p>
+                  <p className="text-primary font-semibold">{email}</p>
+                </div>
+                
+                <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+                  <p className="text-sm text-muted-foreground">
+                    Clique no link no email para confirmar a sua conta.
+                    Se não recebeu o email, verifique a pasta de spam.
+                  </p>
+                </div>
+
+                <div className="space-y-3">
+                  <Button 
+                    type="button" 
+                    variant="outline"
+                    className="w-full h-12 text-base font-medium gap-2"
+                    onClick={() => {
+                      setMode("login");
+                      setPassword("");
+                    }}
+                  >
+                    <ArrowRight className="h-4 w-4" />
+                    Ir para o login
+                  </Button>
+                  
+                  <Button 
+                    type="button" 
+                    variant="ghost"
+                    className="w-full h-12 text-base font-medium gap-2"
+                    onClick={() => {
+                      setMode("signup");
+                      setPassword("");
+                    }}
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                    Registar com outro email
+                  </Button>
+                </div>
+              </div>
+            )}
+
             {/* Toggle Mode */}
-            {mode !== "reset" && (
+            {mode !== "reset" && mode !== "verify-email" && (
               <p className="text-center text-muted-foreground">
                 {mode === "login" ? (
                   <>
