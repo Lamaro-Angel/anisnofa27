@@ -15,17 +15,20 @@ export function useCreateUser() {
 
   return useMutation({
     mutationFn: async (data: CreateUserData) => {
+      const safeEmail = data.email.trim().replace(/\s+/g, "");
+      const safeFullName = data.full_name.trim();
+
       // Create user through Supabase Auth
       // The database trigger handle_new_user_registration will automatically:
       // 1. Create the profile
       // 2. Create the user_roles record
       // 3. Create the role-specific record (students, teachers, guardians)
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: data.email,
+        email: safeEmail,
         password: data.password,
         options: {
           data: {
-            full_name: data.full_name,
+            full_name: safeFullName,
             role: data.role,
           },
         },
@@ -35,12 +38,14 @@ export function useCreateUser() {
       if (!authData.user) throw new Error("Falha ao criar utilizador");
 
       // Small delay to ensure trigger completes
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
       return authData.user.id;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: ["available_users"] });
+      queryClient.invalidateQueries({ queryKey: ["searchable-users"] });
       toast({ title: "Utilizador criado com sucesso" });
     },
     onError: (error) => {

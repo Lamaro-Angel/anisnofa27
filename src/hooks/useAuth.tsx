@@ -2,6 +2,8 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
+const normalizeEmail = (email: string) => email.trim().replace(/\s+/g, "");
+
 type AppRole = "admin" | "professor" | "aluno" | "encarregado";
 type GenderType = "masculino" | "feminino" | "outro";
 
@@ -81,14 +83,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signIn = async (email: string, password: string) => {
+    const safeEmail = normalizeEmail(email);
+
     const { error } = await supabase.auth.signInWithPassword({
-      email,
+      email: safeEmail,
       password,
     });
     return { error: error as Error | null };
   };
 
-  const signUp = async (email: string, password: string, fullName: string, userRole: AppRole, phone?: string, birthDate?: string, gender?: GenderType) => {
+  const signUp = async (
+    email: string,
+    password: string,
+    fullName: string,
+    userRole: AppRole,
+    phone?: string,
+    birthDate?: string,
+    gender?: GenderType
+  ) => {
+    const safeEmail = normalizeEmail(email);
     const redirectUrl = `${window.location.origin}/`;
 
     // The database trigger handle_new_user_registration will automatically:
@@ -96,7 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // 2. Create the user_roles record
     // 3. Create the role-specific record (students, teachers, guardians)
     const { data, error } = await supabase.auth.signUp({
-      email,
+      email: safeEmail,
       password,
       options: {
         emailRedirectTo: redirectUrl,
@@ -117,7 +130,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Check if user was created and wait a moment for trigger to complete
     if (data.user) {
       // Small delay to ensure trigger completes
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
     }
 
     return { error: null };
