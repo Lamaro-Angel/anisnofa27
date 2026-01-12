@@ -826,6 +826,7 @@ export type Database = {
     }
     Functions: {
       anonymize_ip: { Args: { ip_addr: string }; Returns: string }
+      can_view_teacher: { Args: { _teacher_id: string }; Returns: boolean }
       cleanup_activity_logs: { Args: never; Returns: undefined }
       get_user_role: {
         Args: { _user_id: string }

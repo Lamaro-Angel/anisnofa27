@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useClasses, useCreateClass, useUpdateClass, useDeleteClass, useAcademicYears, useCreateAcademicYear } from "@/hooks/useClasses";
 import { useSubjects, useCreateSubject, useDeleteSubject } from "@/hooks/useSubjects";
 import { useClassSubjects, useTeachers, useCreateClassSubject, useUpdateClassSubject, useDeleteClassSubject } from "@/hooks/useClassSubjects";
@@ -12,6 +13,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2, Users, BookOpen, Calendar, GraduationCap } from "lucide-react";
+
 
 export default function Classes() {
   const { data: classes, isLoading: classesLoading } = useClasses();
@@ -201,30 +203,40 @@ export default function Classes() {
                           <TableCell>{cls.student_count || 0}</TableCell>
                           <TableCell>{cls.capacity || 30}</TableCell>
                           <TableCell className="text-right">
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Eliminar turma?</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Esta ação não pode ser revertida.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                  <AlertDialogAction
-                                    onClick={() => deleteClass.mutate(cls.id)}
-                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            <div className="flex justify-end gap-2">
+                              <Button asChild variant="outline" size="sm">
+                                <Link to={`/enrollment?classId=${cls.id}`}>Adicionar aluno</Link>
+                              </Button>
+
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="text-destructive hover:text-destructive"
                                   >
-                                    Eliminar
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Eliminar turma?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Esta ação não pode ser revertida.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => deleteClass.mutate(cls.id)}
+                                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    >
+                                      Eliminar
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}

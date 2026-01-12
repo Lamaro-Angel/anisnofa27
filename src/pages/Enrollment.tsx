@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useClasses } from "@/hooks/useClasses";
 import { useUsers } from "@/hooks/useUsers";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +17,8 @@ import { useQueryClient, useQuery } from "@tanstack/react-query";
 
 export default function Enrollment() {
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const { data: classes, isLoading: classesLoading } = useClasses();
   const { data: users, isLoading: usersLoading } = useUsers();
   const [searchQuery, setSearchQuery] = useState("");
@@ -25,6 +27,45 @@ export default function Enrollment() {
   const [selectedClass, setSelectedClass] = useState<string>("");
   const [studentNumber, setStudentNumber] = useState("");
   const [enrolling, setEnrolling] = useState(false);
+
+  const handleDialogOpenChange = (open: boolean) => {
+    setDialogOpen(open);
+
+    // Se a página foi aberta via link /enrollment?classId=..., limpar o parâmetro ao fechar
+    if (!open && searchParams.get("classId")) {
+      const next = new URLSearchParams(searchParams);
+      next.delete("classId");
+      setSearchParams(next, { replace: true });
+    }
+  };
+
+  // Preselecionar turma via query param (atalho desde Gestão de Turmas)
+  useEffect(() => {
+    const classId = searchParams.get("classId");
+    if (!classId) return;
+
+    setSelectedClass(classId);
+    setDialogOpen(true);
+  }, [searchParams]);
+
+  // Realtime: atualizar listas quando houver mudanças em matrículas
+  useEffect(() => {
+    const channel = supabase
+      .channel("students-realtime-enrollment")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "students" },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["enrolled-students"] });
+          queryClient.invalidateQueries({ queryKey: ["classes"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   // Get all enrolled students with their classes
   const { data: enrolledStudents, isLoading: studentsLoading } = useQuery({
@@ -124,6 +165,7 @@ export default function Enrollment() {
       toast({ title: "Aluno matriculado com sucesso!" });
       queryClient.invalidateQueries({ queryKey: ["enrolled-students"] });
       queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: ["classes"] });
       setDialogOpen(false);
       setSelectedUser(null);
       setSelectedClass("");
@@ -146,6 +188,7 @@ export default function Enrollment() {
 
       toast({ title: "Turma atualizada com sucesso" });
       queryClient.invalidateQueries({ queryKey: ["enrolled-students"] });
+      queryClient.invalidateQueries({ queryKey: ["classes"] });
     } catch (error: any) {
       toast({ title: "Erro ao atualizar turma", description: error.message, variant: "destructive" });
     }
@@ -168,7 +211,7 @@ export default function Enrollment() {
           <h1 className="text-3xl font-bold">Matrículas</h1>
           <p className="text-muted-foreground">Matricular e gerir alunos nas turmas</p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <Dialog open={dialogOpen} onOpenChange={handleDialogOpenChange}>
           <DialogTrigger asChild>
             <Button className="gap-2">
               <UserPlus className="h-4 w-4" />
