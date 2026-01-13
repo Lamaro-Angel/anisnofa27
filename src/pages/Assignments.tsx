@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { FileText, Upload, Calendar, Clock, Download, Plus, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
@@ -109,6 +110,13 @@ export default function Assignments() {
   const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
   const [uploading, setUploading] = useState(false);
   const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
+  
+  // State for new assignment dialog
+  const [newAssignmentOpen, setNewAssignmentOpen] = useState(false);
+  const [newTitle, setNewTitle] = useState("");
+  const [newDescription, setNewDescription] = useState("");
+  const [newDueDate, setNewDueDate] = useState("");
+  const [selectedClassSubject, setSelectedClassSubject] = useState("");
 
   // Get student ID for student role
   const { data: studentData } = useQuery({
@@ -124,6 +132,35 @@ export default function Assignments() {
       return data;
     },
     enabled: !!user && role === "aluno",
+  });
+
+  // Get teacher's class_subjects for creating assignments
+  const { data: teacherClassSubjects } = useQuery({
+    queryKey: ["teacher-class-subjects", user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      
+      const { data: teacher } = await supabase
+        .from("teachers")
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      
+      if (!teacher) return [];
+
+      const { data, error } = await supabase
+        .from("class_subjects")
+        .select(`
+          id,
+          subject:subjects(id, name),
+          class:classes(id, name)
+        `)
+        .eq("teacher_id", teacher.id);
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user && role === "professor",
   });
 
   // Fetch assignments
@@ -236,6 +273,42 @@ export default function Assignments() {
     },
   });
 
+  // Create assignment mutation
+  const createAssignment = useMutation({
+    mutationFn: async () => {
+      if (!user || !selectedClassSubject) throw new Error("Dados em falta");
+
+      const { error } = await supabase.from("assignments").insert({
+        title: newTitle,
+        description: newDescription || null,
+        due_date: newDueDate ? new Date(newDueDate).toISOString() : null,
+        class_subject_id: selectedClassSubject,
+        created_by: user.id,
+      });
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["assignments"] });
+      toast({
+        title: "Trabalho criado!",
+        description: "O trabalho foi criado com sucesso.",
+      });
+      setNewAssignmentOpen(false);
+      setNewTitle("");
+      setNewDescription("");
+      setNewDueDate("");
+      setSelectedClassSubject("");
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: error.message || "Não foi possível criar o trabalho.",
+      });
+    },
+  });
+
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !selectedAssignment) return;
@@ -280,10 +353,75 @@ export default function Assignments() {
           </p>
         </div>
         {role === "professor" && (
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Novo Trabalho
-          </Button>
+          <Dialog open={newAssignmentOpen} onOpenChange={setNewAssignmentOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Novo Trabalho
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Criar Novo Trabalho</DialogTitle>
+                <DialogDescription>
+                  Crie um novo trabalho para os seus alunos
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Turma / Disciplina</Label>
+                  <Select value={selectedClassSubject} onValueChange={setSelectedClassSubject}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecionar turma/disciplina" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {teacherClassSubjects?.map((cs: any) => (
+                        <SelectItem key={cs.id} value={cs.id}>
+                          {cs.class?.name} - {cs.subject?.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Título</Label>
+                  <Input
+                    value={newTitle}
+                    onChange={(e) => setNewTitle(e.target.value)}
+                    placeholder="Ex: Ficha de trabalho nº 1"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Descrição (opcional)</Label>
+                  <Textarea
+                    value={newDescription}
+                    onChange={(e) => setNewDescription(e.target.value)}
+                    placeholder="Instruções para o trabalho..."
+                    rows={3}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Data de Entrega (opcional)</Label>
+                  <Input
+                    type="datetime-local"
+                    value={newDueDate}
+                    onChange={(e) => setNewDueDate(e.target.value)}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setNewAssignmentOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={() => createAssignment.mutate()}
+                  disabled={!newTitle || !selectedClassSubject || createAssignment.isPending}
+                >
+                  {createAssignment.isPending ? "A criar..." : "Criar Trabalho"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         )}
       </div>
 

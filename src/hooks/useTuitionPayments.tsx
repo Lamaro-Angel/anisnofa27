@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 
 export interface TuitionPayment {
   id: string;
@@ -26,9 +27,41 @@ export interface TuitionPayment {
 }
 
 export function useTuitionPayments() {
+  const { user, role } = useAuth();
+
   return useQuery({
-    queryKey: ["tuition-payments"],
+    queryKey: ["tuition-payments", user?.id, role],
     queryFn: async () => {
+      if (!user) return [];
+
+      // For guardians, first get their guardian record, then filter payments
+      if (role === "encarregado") {
+        const { data: guardian } = await supabase
+          .from("guardians")
+          .select("id")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (!guardian) return [];
+
+        const { data, error } = await supabase
+          .from("tuition_payments")
+          .select(`
+            *,
+            student:students(
+              id,
+              user_id,
+              profiles:profiles(full_name)
+            )
+          `)
+          .eq("guardian_id", guardian.id)
+          .order("due_date", { ascending: false });
+
+        if (error) throw error;
+        return data as unknown as TuitionPayment[];
+      }
+
+      // For admins, return all payments
       const { data, error } = await supabase
         .from("tuition_payments")
         .select(`
@@ -44,6 +77,7 @@ export function useTuitionPayments() {
       if (error) throw error;
       return data as unknown as TuitionPayment[];
     },
+    enabled: !!user,
   });
 }
 

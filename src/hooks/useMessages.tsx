@@ -214,10 +214,10 @@ export function useMarkAsRead() {
 }
 
 export function useAvailableUsers() {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
 
   return useQuery({
-    queryKey: ["available_users", user?.id],
+    queryKey: ["available_users", user?.id, role],
     queryFn: async () => {
       if (!user) return [];
 
@@ -231,10 +231,26 @@ export function useAvailableUsers() {
 
       const { data: roles } = await supabase.from("user_roles").select("user_id, role");
 
-      return profiles.map((profile) => ({
-        ...profile,
-        role: roles?.find((r) => r.user_id === profile.id)?.role,
-      }));
+      // Get student numbers for students
+      const { data: students } = await supabase.from("students").select("user_id, student_number");
+
+      // If current user is a student, hide email from results (privacy)
+      const isStudent = role === "aluno";
+
+      return profiles.map((profile) => {
+        const userRole = roles?.find((r) => r.user_id === profile.id)?.role;
+        const studentNumber = students?.find((s) => s.user_id === profile.id)?.student_number;
+
+        return {
+          id: profile.id,
+          full_name: profile.full_name,
+          // Students can only see email of non-students (teachers, admins) - not other students
+          email: isStudent && userRole === "aluno" ? undefined : profile.email,
+          avatar_url: profile.avatar_url,
+          role: userRole,
+          student_number: studentNumber,
+        };
+      });
     },
     enabled: !!user,
   });
