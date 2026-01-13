@@ -70,7 +70,8 @@ export default function Messages() {
   const filteredUsers = availableUsers?.filter(
     (u) =>
       u.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      u.email.toLowerCase().includes(searchQuery.toLowerCase())
+      u.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      u.student_number?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const getInitials = (name: string) =>
@@ -132,7 +133,9 @@ export default function Messages() {
                             </Avatar>
                             <div className="flex-1 min-w-0">
                               <p className="font-medium truncate">{u.full_name}</p>
-                              <p className="text-xs text-muted-foreground truncate">{u.email}</p>
+                              <p className="text-xs text-muted-foreground truncate">
+                                {u.email || (u.student_number ? `Nº ${u.student_number}` : "")}
+                              </p>
                             </div>
                             {u.role && (
                               <Badge variant="secondary" className="text-xs">
