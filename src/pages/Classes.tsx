@@ -349,14 +349,14 @@ export default function Classes() {
                           <TableCell>{cs.subject_name || "-"}</TableCell>
                           <TableCell>
                             <Select 
-                              value={cs.teacher_id || ""} 
-                              onValueChange={(v) => handleTeacherChange(cs.id, v)}
+                              value={cs.teacher_id || "none"} 
+                              onValueChange={(v) => handleTeacherChange(cs.id, v === "none" ? "" : v)}
                             >
                               <SelectTrigger className="w-[200px]">
                                 <SelectValue placeholder="Selecionar professor" />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="">Nenhum</SelectItem>
+                                <SelectItem value="none">Nenhum</SelectItem>
                                 {teachers?.map((t) => (
                                   <SelectItem key={t.id} value={t.id}>{t.profile?.full_name || "Sem nome"}</SelectItem>
                                 ))}
